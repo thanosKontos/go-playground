@@ -1,0 +1,61 @@
+package main
+
+import (
+	"bytes"
+	"encoding/binary"
+	"fmt"
+	"os"
+)
+
+//this type represnts a record with three fields
+type payload struct {
+	A float32
+	B float64
+	C uint32
+}
+
+func main() {
+	writeFile()
+	readFile()
+}
+
+func writeFile() {
+	file, _ := os.Create("test.bin")
+	defer file.Close()
+
+	s1 := &payload{float32(123.32), float64(321.12), uint32(847105830)}
+	s2 := &payload{float32(789.32), float64(987.12), uint32(1048367106)}
+
+	bin_buf := bytes.Buffer{}
+	binary.Write(&bin_buf, binary.BigEndian, s1)
+	file.Write(bin_buf.Bytes())
+
+	bin_buf = bytes.Buffer{}
+	binary.Write(&bin_buf, binary.BigEndian, s2)
+	file.Write(bin_buf.Bytes())
+}
+
+func readFile() {
+	file, _ := os.Open("test.bin")
+	defer file.Close()
+
+	m := payload{}
+	payloadSz := 16
+
+	data := readNextBytes(file, payloadSz)
+	buffer := bytes.NewBuffer(data)
+	binary.Read(buffer, binary.BigEndian, &m)
+	fmt.Println(m)
+
+	data = readNextBytes(file, payloadSz)
+	buffer = bytes.NewBuffer(data)
+	binary.Read(buffer, binary.BigEndian, &m)
+	fmt.Println(m)
+}
+
+func readNextBytes(file *os.File, number int) []byte {
+	bytes := make([]byte, number)
+	file.Read(bytes)
+
+	return bytes
+}
